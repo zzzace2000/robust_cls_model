@@ -1,0 +1,7 @@
+*.npz
+__pycache__/
+!inpainting_models/
+inpainting_models/*
+/in9.csv
+.idea/
+*.tar.gz
