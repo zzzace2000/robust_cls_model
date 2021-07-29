@@ -9,7 +9,6 @@ from argparse import Namespace
 import sys
 
 from ..utils import output_csv
-from .base_imagenet import ImageNetLightningModel
 
 
 class CSVRecordingCallback(pl.Callback):
@@ -33,13 +32,10 @@ class CSVRecordingCallback(pl.Callback):
         assert pexists(result_f), 'Result %s should exists!' % result_f
 
         df = pd.read_csv(result_f, delimiter='\t')
-        if isinstance(pl_module, ImageNetLightningModel): # 'imageneta'
-            # Use the last step as the final model!
-            best_idx = -1
-        else:
-            func = {'min': np.argmin, 'max': np.argmax}[
-                trainer.checkpoint_callback.mode]
-            best_idx = int(func(df[trainer.checkpoint_callback.monitor].values))
+
+        func = {'min': np.argmin, 'max': np.argmax}[
+            trainer.checkpoint_callback.mode]
+        best_idx = int(func(df[trainer.checkpoint_callback.monitor].values))
 
         best_metric = df.iloc[best_idx].to_dict()
 
@@ -78,12 +74,9 @@ class CSVRecordingCallback(pl.Callback):
         if os.path.islink(bpath):
             os.unlink(bpath)
 
-        if isinstance(pl_module, ImageNetLightningModel): # 'imageneta'
-            os.symlink('last.ckpt', bpath)
-        else:
-            best_filename = trainer.checkpoint_callback.format_checkpoint_name(
-                best_metric['epoch'], dict(gstep=best_metric['global_step']))
-            os.symlink(best_filename, bpath)
+        best_filename = trainer.checkpoint_callback.format_checkpoint_name(
+            best_metric['epoch'], dict(gstep=best_metric['global_step']))
+        os.symlink(best_filename, bpath)
 
     def on_test_start(self, trainer, pl_module):
         # Check if it already runs
